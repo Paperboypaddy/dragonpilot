@@ -347,10 +347,10 @@ class CarInterface(CarInterfaceBase):
     ret = self.CS.update(self.cp, self.cp_cam)
     ret.cruiseState.enabled, ret.cruiseState.available = self.dp_atl_mode(ret)
 
-    if self.CS.CP.openpilotLongitudinalControl and self.CS.cruise_buttons[-1] != self.CS.prev_cruise_buttons:
-      buttonEvents = [create_button_event(self.CS.cruise_buttons[-1], self.CS.prev_cruise_buttons, BUTTONS_DICT)]
+    if self.CS.cruise_buttons != self.CS.prev_cruise_buttons:
+      buttonEvents = [create_button_event(self.CS.cruise_buttons, self.CS.prev_cruise_buttons, BUTTONS_DICT)]
       # Handle CF_Clu_CruiseSwState changing buttons mid-press
-      if self.CS.cruise_buttons[-1] != 0 and self.CS.prev_cruise_buttons != 0:
+      if self.CS.cruise_buttons != 0 and self.CS.prev_cruise_buttons != 0:
         buttonEvents.append(create_button_event(0, self.CS.prev_cruise_buttons, BUTTONS_DICT))
 
       ret.buttonEvents = buttonEvents
@@ -359,11 +359,11 @@ class CarInterface(CarInterfaceBase):
     # To avoid re-engaging when openpilot cancels, check user engagement intention via buttons
     # Main button also can trigger an engagement on these cars
     allow_enable = any(btn in ENABLE_BUTTONS for btn in self.CS.cruise_buttons) or any(self.CS.main_buttons)
-    events = self.create_common_events(ret, pcm_enable=self.CS.CP.pcmCruise, allow_enable=allow_enable)
+    events = self.create_common_events(ret)
     events = self.dp_atl_warning(ret, events)
 
-    if self.CS.brake_error:
-      events.add(EventName.brakeUnavailable)
+    # if self.CS.brake_error:
+    #   events.add(EventName.brakeUnavailable)
 
     # low speed steer alert hysteresis logic (only for cars with steer cut off above 10 m/s)
     if ret.vEgo < (self.CP.minSteerSpeed + 2.) and self.CP.minSteerSpeed > 10.:
