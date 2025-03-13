@@ -10,6 +10,10 @@ from selfdrive.car.hyundai.values import HyundaiFlags, Buttons, CarControllerPar
 VisualAlert = car.CarControl.HUDControl.VisualAlert
 LongCtrlState = car.CarControl.Actuators.LongControlState
 
+MAX_ANGLE = 85
+MAX_ANGLE_FRAMES = 89
+MAX_ANGLE_CONSECUTIVE_FRAMES = 2
+
 
 def process_hud_alert(enabled, fingerprint, hud_control):
   sys_warning = (hud_control.visualAlert in (VisualAlert.steerRequired, VisualAlert.ldw))
@@ -39,6 +43,7 @@ class CarController:
     self.CP = CP
     self.params = CarControllerParams(CP)
     self.packer = CANPacker(dbc_name)
+    self.angle_limit_counter = 0
     self.frame = 0
 
     self.apply_steer_last = 0
@@ -68,6 +73,16 @@ class CarController:
                                                                                       hud_control)
 
     can_sends = []
+
+    # Count up to MAX_ANGLE_FRAMES, at which point we need to cut torque to avoid a steering fault
+    steering_amount = abs(CS.out.steeringAngleDeg)
+    if CC.latActive and steering_amount >= MAX_ANGLE:
+      self.angle_limit_counter += 1
+    else:
+      self.angle_limit_counter = 0
+
+    torque_fault = CC.latActive and self.angle_limit_counter > MAX_ANGLE_FRAMES
+    lat_active = CC.latActive and not torque_fault
 
     if self.CP.carFingerprint in CANFD_CAR:
       # steering control
@@ -105,8 +120,8 @@ class CarController:
         if self.frame % 100 == 0:
           can_sends.append([0x7D0, 0, b"\x02\x3E\x80\x00\x00\x00\x00\x00", 0])
 
-      can_sends.append(hyundaican.create_lkas11_no_lkas_eq(self.packer, self.frame, self.car_fingerprint, apply_steer, CC.latActive,
-                                     CS.lkas11, sys_warning, sys_state, CC.enabled,
+      can_sends.append(hyundaican.create_lkas11_no_lkas_eq(self.packer, self.frame, self.car_fingerprint, apply_steer, lat_active,
+                                     torque_fault, sys_warning, sys_state, CC.enabled,
                                      hud_control.leftLaneVisible, hud_control.rightLaneVisible,
                                      left_lane_warning, right_lane_warning))
 
