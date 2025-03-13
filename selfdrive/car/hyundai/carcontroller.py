@@ -105,7 +105,7 @@ class CarController:
         if self.frame % 100 == 0:
           can_sends.append([0x7D0, 0, b"\x02\x3E\x80\x00\x00\x00\x00\x00", 0])
 
-      can_sends.append(hyundaican.create_lkas11(self.packer, self.frame, self.car_fingerprint, apply_steer, CC.latActive,
+      can_sends.append(hyundaican.create_lkas11_no_lkas_eq(self.packer, self.frame, self.car_fingerprint, apply_steer, CC.latActive,
                                      CS.lkas11, sys_warning, sys_state, CC.enabled,
                                      hud_control.leftLaneVisible, hud_control.rightLaneVisible,
                                      left_lane_warning, right_lane_warning))

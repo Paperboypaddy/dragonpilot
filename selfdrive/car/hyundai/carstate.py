@@ -58,7 +58,7 @@ class CarState(CarStateBase):
 
     ret.standstill = ret.vEgoRaw < 0.1
 
-    ret.steeringAngleDeg = cp.vl["SAS11"]["SAS_Angle"]
+    ret.steeringAngleDeg = cp.vl["SAS11"]["SAS_Angle"] - 27.0
     ret.steeringRateDeg = cp.vl["SAS11"]["SAS_Speed"]
     ret.yawRate = cp.vl["ESP12"]["YAW_RATE"]
     ret.leftBlinker, ret.rightBlinker = self.update_blinker_from_lamp(
@@ -123,7 +123,7 @@ class CarState(CarStateBase):
       ret.rightBlindspot = cp.vl["LCA11"]["CF_Lca_IndRight"] != 0
 
     # save the entire LKAS11 and CLU11
-    self.lkas11 = copy.copy(cp_cam.vl["LKAS11"])
+    # self.lkas11 = copy.copy(cp_cam.vl["LKAS11"])
     self.clu11 = copy.copy(cp.vl["CLU11"])
     self.steer_state = cp.vl["MDPS12"]["CF_Mdps_ToiActive"]  # 0 NOT ACTIVE, 1 ACTIVE
     self.brake_error = cp.vl["TCS13"]["ACCEnable"] != 0  # 0 ACC CONTROL ENABLED, 1-3 ACC CONTROL DISABLED
@@ -328,27 +328,30 @@ class CarState(CarStateBase):
     if CP.carFingerprint in CANFD_CAR:
       return CarState.get_cam_can_parser_canfd(CP)
 
-    signals = [
-      # signal_name, signal_address
-      ("CF_Lkas_LdwsActivemode", "LKAS11"),
-      ("CF_Lkas_LdwsSysState", "LKAS11"),
-      ("CF_Lkas_SysWarning", "LKAS11"),
-      ("CF_Lkas_LdwsLHWarning", "LKAS11"),
-      ("CF_Lkas_LdwsRHWarning", "LKAS11"),
-      ("CF_Lkas_HbaLamp", "LKAS11"),
-      ("CF_Lkas_FcwBasReq", "LKAS11"),
-      ("CF_Lkas_HbaSysState", "LKAS11"),
-      ("CF_Lkas_FcwOpt", "LKAS11"),
-      ("CF_Lkas_HbaOpt", "LKAS11"),
-      ("CF_Lkas_FcwSysState", "LKAS11"),
-      ("CF_Lkas_FcwCollisionWarning", "LKAS11"),
-      ("CF_Lkas_FusionState", "LKAS11"),
-      ("CF_Lkas_FcwOpt_USM", "LKAS11"),
-      ("CF_Lkas_LdwsOpt_USM", "LKAS11"),
-    ]
-    checks = [
-      ("LKAS11", 100)
-    ]
+
+    signals = []
+    checks = []
+    # signals = [
+    #   # signal_name, signal_address
+    #   ("CF_Lkas_LdwsActivemode", "LKAS11"),
+    #   ("CF_Lkas_LdwsSysState", "LKAS11"),
+    #   ("CF_Lkas_SysWarning", "LKAS11"),
+    #   ("CF_Lkas_LdwsLHWarning", "LKAS11"),
+    #   ("CF_Lkas_LdwsRHWarning", "LKAS11"),
+    #   ("CF_Lkas_HbaLamp", "LKAS11"),
+    #   ("CF_Lkas_FcwBasReq", "LKAS11"),
+    #   ("CF_Lkas_HbaSysState", "LKAS11"),
+    #   ("CF_Lkas_FcwOpt", "LKAS11"),
+    #   ("CF_Lkas_HbaOpt", "LKAS11"),
+    #   ("CF_Lkas_FcwSysState", "LKAS11"),
+    #   ("CF_Lkas_FcwCollisionWarning", "LKAS11"),
+    #   ("CF_Lkas_FusionState", "LKAS11"),
+    #   ("CF_Lkas_FcwOpt_USM", "LKAS11"),
+    #   ("CF_Lkas_LdwsOpt_USM", "LKAS11"),
+    # ]
+    # checks = [
+    #   ("LKAS11", 100)
+    # ]
 
     if not CP.openpilotLongitudinalControl and CP.carFingerprint in CAMERA_SCC_CAR:
       signals += [
